@@ -1,0 +1,125 @@
+
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 80px;
+}
+
+.App-header {
+  background-color: #222;
+  height: 150px;
+  padding: 20px;
+  color: white;
+}
+
+.App-intro {
+  font-size: large;
+}
+
+@keyframes App-logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+
+.LoginForm {
+  overflow: hidden;
+  text-align: center;
+  background-color: #222;
+  width: 350px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  height: 350px;
+
+  -webkit-transition: 1s;
+  -moz-transition: 1s;
+  -o-transition: 1s;
+  transition: 1s;
+
+}
+
+.LoginForm-collapse {
+  overflow: hidden;
+  text-align: center;
+  background-color: #222;
+  width: 350px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  height: 270px;
+
+
+  -webkit-transition: 1s;
+  -moz-transition: 1s;
+  -o-transition: 1s;
+  transition: 1s;
+}
+
+.LoginField {
+  width: 268px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 6px;
+
+  -webkit-transition: 1s;
+  -moz-transition: 1s;
+  -o-transition: 1s;
+  transition: 1s;
+}
+
+.FormLoginField {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.logo {
+  margin-top: 10px !important;
+}
+
+.BottomBar {
+  text-align: center;
+  background-color: #fff;
+  width: 350px;
+  height: 50px;
+  border-radius: 5px;
+  line-height: 50px;
+}
+
+.FormLayout {
+  text-align: center;
+  width: 350px;
+  position: absolute;
+  left: 50%;
+  top: 25vh;
+
+  margin-left: -175px;
+
+}
+
+p.red {
+  color: red;
+}
+
+.notFilled {
+  color: red;
+  font-size: 18px;
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
+.notFilled1 {
+  right: 50px;
+  margin-top: 8px;
+  position: absolute;
+}
+
+button.btn.btn-link {
+     padding: 0 !important;
+}

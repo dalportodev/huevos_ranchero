@@ -1,0 +1,90 @@
+.logoutDiv{
+	max-width: 800px;
+	position: relative;
+	margin-left: auto;
+	margin-right: auto;
+	right: 16px;
+	padding-top: 8px;
+}
+
+.headingBlock {
+	background-color: #222;
+	color: #fff;
+	padding-bottom: 8px;
+	margin-bottom: 16px;
+}
+
+@media only screen and (max-width: 640px) {
+	.headingBlock {
+		margin-bottom: -3px !important;
+	}
+
+	#root > div > div > div > div > div{
+		border-style: none !important;
+	}
+
+	.uploadBlock{
+		max-width: 79% !important;
+	}
+}
+
+@media only screen and (min-width: 640px) and (max-width: 760px) {
+	.uploadBlock{
+		max-width: 82% !important;
+	}
+}
+
+@media only screen and (min-width: 760px) {
+	.uploadBlock{
+		max-width: 84% !important;
+	}
+}
+
+
+
+.innerBlock{
+	max-width: 800px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.uploadBlock{
+
+	float: left;
+}
+
+.upload {
+	float: right;
+}
+
+
+
+#root > div > div > div > div > div > div.panel-heading{
+	background-color: #222;
+	border-color: #222;
+
+}
+
+#root > div > div > div > div > div.panel.innerBlock.panel.panel-primary > div.panel-body {
+	position: relative;
+}
+
+#root > div > div > div > div > div{
+	border-color: #DDDDDD;
+}
+
+.logo{
+	display: block;
+	margin: 0 auto;
+	z-index: -1;
+}
+
+.logout {
+	right: 0;
+	z-index: 1;
+	position: absolute;
+}
+
+.center{
+	text-align:center;
+}
