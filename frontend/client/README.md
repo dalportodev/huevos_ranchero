@@ -1,5 +1,4 @@
-# React.js static build
-
+# React.js dev server
 Installation
 1. Download Node.js: https://nodejs.org/en/
 2. Using Node.js command prompt, run the command: ```npm install -g create-react-app```
