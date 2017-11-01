@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "base-64": "^0.1.0",
     "history": "^4.7.2",
     "react": "^15.6.2",
     "react-animate-height": "^0.10.5",

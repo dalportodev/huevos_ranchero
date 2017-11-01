@@ -35,7 +35,7 @@ class Members extends Component {
 	upload = e => {
 		e.preventDefault();
 
-		fetch('http://localhost:3000/api/upload', {
+		fetch('http://localhost:3001/api/upload', {
 			method: 'POST',
 			headers: {
 				'Accept': 'application/json, application/xml, text/plain, text/html, *.*',
@@ -63,7 +63,7 @@ class Members extends Component {
 				</div>
 			}>
 
-			<Form encType='multipart/form-data' ref='uploadForm' id='uploadForm' method='POST' action='http://localhost:3000/api/upload'>
+			<Form encType='multipart/form-data' ref='uploadForm' id='uploadForm' method='POST' action='http://localhost:3001/api/upload'>
 			<input type="hidden" name="username" value={this.props.username} />
 
 

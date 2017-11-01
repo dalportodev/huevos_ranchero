@@ -63,7 +63,7 @@ login() {
 		username: base64.encode(this.loginInput.value),
 		password: base64.encode(this.passwordInput.value)
 	}
-	var login = new Request('http://localhost:3000/api/login', {
+	var login = new Request('http://localhost:3001/api/login', {
 		method: 'POST',
 			headers: new Headers({ 'Content-Type': 'application/json' }),
 			body: JSON.stringify(data)
@@ -99,11 +99,11 @@ register(){
 		last_name: this.lastNameInput.value
 	}
 
-	var checkUsername = new Request('http://localhost:3000/api/check-username?username=' + data.username, {
+	var checkUsername = new Request('http://localhost:3001/api/check-username?username=' + data.username, {
 		method: 'GET'
 	});
 
-	var registerUser = new Request('http://localhost:3000/api/new-user', {
+	var registerUser = new Request('http://localhost:3001/api/new-user', {
 		method: 'POST',
 		headers: new Headers({ 'Content-Type': 'application/json' }),
 		body: JSON.stringify(data)

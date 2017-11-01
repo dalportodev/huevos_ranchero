@@ -5,7 +5,7 @@ let bodyParser = require('body-parser');
 let morgan = require('morgan');
 let pg = require('pg');
 let mkdirp = require('mkdirp');
-const PORT = 3000;
+const PORT = 3001;
 
 let pool = new pg.Pool({
 	host: 'localhost',
