@@ -10,7 +10,7 @@ const PORT = 3001;
 let pool = new pg.Pool({
 	host: 'localhost',
 	user: 'postgres',
-	password: 'password',
+	password: 'admin2084',
 	database: 'huevos_ranchero',
 	port: 5432,
 	max: 10,
@@ -108,6 +108,7 @@ console.log(req.body);
 
 app.post('/api/login', function(request, response){
 	let base64 = require('base-64');
+	let dir = require('node-dir');
 
 	var ip = request.headers['x-forwarded-for'] || 
 	request.connection.remoteAddress || 

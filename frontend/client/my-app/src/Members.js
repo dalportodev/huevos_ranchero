@@ -22,7 +22,7 @@ class Members extends Component {
 		var ext = this.fileName.files[0].name.match(/\.(.+)$/)[1];
 		console.log(ext);
 
-		if(ext == 'avi'){
+		if(ext === 'avi'){
 			this.setState({
 				inputValue: this.fileName.files[0].name
 			});
@@ -44,7 +44,7 @@ class Members extends Component {
 			body: this.fileName
 		});
 
-		alert('test');
+		
 	}
 
 	render(){
@@ -63,6 +63,7 @@ class Members extends Component {
 				</div>
 			}>
 
+			
 			<Form encType='multipart/form-data' ref='uploadForm' id='uploadForm' method='POST' action='http://localhost:3001/api/upload'>
 			<input type="hidden" name="username" value={this.props.username} />
 
@@ -88,6 +89,7 @@ class Members extends Component {
 			<Button className="upload" bsStyle="primary" type="submit">Upload video</Button>
 			</Form>
 
+			
 			<br/>
 			<br/>
 			<br/>
