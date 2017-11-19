@@ -22,7 +22,7 @@ class Members extends Component {
 		var ext = this.fileName.files[0].name.match(/\.(.+)$/)[1];
 		console.log(ext);
 
-		if(ext === 'avi'){
+		if(ext == 'avi'){
 			this.setState({
 				inputValue: this.fileName.files[0].name
 			});
@@ -44,6 +44,7 @@ class Members extends Component {
 			body: this.fileName
 		});
 
+		alert('test');
 		
 	}
 
