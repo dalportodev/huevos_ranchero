@@ -81,7 +81,7 @@ app.use(fileUpload({
 
 app.post('/api/upload', function(req, res) {
 	var username = req.body.username;
-console.log(req.body);
+console.log(req);
 	if (!req.files){
 		console.log(req.files);
 		console.log('No files uploaded.');
@@ -102,7 +102,8 @@ console.log(req.body);
 			return res.status(500).send(err);
 		}
 		console.log('File uploaded!');
-		res.send('File uploaded!');
+		//res.send('File uploaded!');
+		res.sendStatus(200);
 	});
 });
 

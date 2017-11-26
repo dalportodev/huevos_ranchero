@@ -3,13 +3,14 @@ import logo from './huevosranchero.png';
 import './css/Members.css';
 import { Alert, Form, FormControl, Button, Panel, Table, Grid, Row, Col} from 'react-bootstrap';
 import { connect } from 'react-redux';
+const request = require('superagent');
 
 class Members extends Component {
 	constructor(props){
 		super(props);
 
 		this.state = {
-			inputValue : 'Only .avi files allowed.'
+			inputValue : 'Only .mp4 files allowed.'
 		}
 	}
 
@@ -19,32 +20,55 @@ class Members extends Component {
 	}
 
 	browse(){
-		var ext = this.fileName.files[0].name.match(/\.(.+)$/)[1];
-		console.log(ext);
+		if(typeof this.fileName.files[0] !== 'undefined'){
+			var ext = this.fileName.files[0].name.match(/\.(.+)$/)[1];
+			console.log(ext);
 
-		if(ext == 'avi'){
-			this.setState({
-				inputValue: this.fileName.files[0].name
-			});
+			if(ext == 'mp4'){
+				this.setState({
+					inputValue: this.fileName.files[0].name
+				});
+			} else {
+				this.fileName.value = '';
+				alert('Please choose a file with the .mp4 extension');
+			}
 		} else {
-			this.fileName.value = '';
-			alert('Please choose a file with the .avi extension');
+			this.setState({
+				inputValue: 'Only .mp4 files allowed.'
+			});
 		}
+
+	}
+
+	handleSubmit(event) {
+		alert('A name was submitted: ' + this.state.value);
+		event.preventDefault();
 	}
 
 	upload = e => {
+		console.log(this.fileName.files[0]);
 		e.preventDefault();
 
-		fetch('http://localhost:3001/api/upload', {
-			method: 'POST',
-			headers: {
-				'Accept': 'application/json, application/xml, text/plain, text/html, *.*',
-				'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
-			},
-			body: this.fileName
+		request
+		.post('http://localhost:3001/api/upload')
+		.attach('videoFile', this.fileName.files[0])
+		.field('username', this.props.username)
+		.end(function(err, res){
+			if(err){
+				alert(err);
+				return;
+			}
+			alert("File uploaded successfully!");
 		});
 
-		alert('test');
+		//var newform = new FormData(document.getElementById("formUpload"));
+
+/*
+		fetch('http://localhost:3001/api/upload', {
+			method: 'POST',
+			body: newform
+		});
+		*/
 		
 	}
 
@@ -65,7 +89,7 @@ class Members extends Component {
 			}>
 
 			
-			<Form encType='multipart/form-data' ref='uploadForm' id='uploadForm' method='POST' action='http://localhost:3001/api/upload'>
+			<Form onSubmit={this.upload.bind(this)} encType='multipart/form-data' ref='uploadForm' id='uploadForm' method='POST' action='http://localhost:3001/api/upload'>
 			<input type="hidden" name="username" value={this.props.username} />
 
 
@@ -78,7 +102,7 @@ class Members extends Component {
 			name="videoFile"
 			inputRef={input => this.fileName = input} 
 			type="file"
-			accept="video/x-msvideo"
+			accept="video/mp4"
 			onChange={this.browse.bind(this)} 
 			style={displayNone}/>
 			</span>
