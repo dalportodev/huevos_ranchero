@@ -32,6 +32,7 @@ How to use:
         
       )
       
+
 7. To run in terminal
    1. Go to OpenFace/build
    2. Run command: make
