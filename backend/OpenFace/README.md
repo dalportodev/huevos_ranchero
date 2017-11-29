@@ -23,8 +23,9 @@ How to use:
    2. Run command: make
    3. Run command: ./bin/FaceLandmark -fdir "path/to/directory/with/images/to/process" -ofdir "irrelevant/but/required/random/path" -iodir "irrelevant/but/required/random/path" -wild
    4. Profit
-   Alternate 4. Cry when it doesn't work
+   4. (Alternate) Cry when it doesn't work
 
 Notes on 7.3:
   -"ofdir" and "iodir" were the original output folders when the program outputted textfiles with the data and images with the points drawn on. I can't get them to not be required. You can pass in whatever directory you want, but if it doesn't exist, it will make it.
+ 
   -"fdir" must be named the video ID of the video we are processing the frames of. It must NOT have a trailing slash (Bad example: "../path/my_vid" or "../path/12354/", good example: "../path/12354"). The images within this folder must be named the frame ID
