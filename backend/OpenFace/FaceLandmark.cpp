@@ -31,12 +31,13 @@
 //       in IEEE Int. Conference on Computer Vision Workshops, 300 Faces in-the-Wild Challenge, 2013.    
 //
 ///////////////////////////////////////////////////////////////////////////////
-// FaceLandmarkImg.cpp : Defines the entry point for the console application for detecting landmarks in images.
+// FaceLandmark.cpp : Defines the entry point for the console application for detecting landmarks in images and outputting them to a hardcoded postgres DB
 
 #include "LandmarkCoreIncludes.h"
 
 // System includes
 #include <fstream>
+#include <string>
 
 // OpenCV includes
 #include <opencv2/core/core.hpp>
@@ -48,23 +49,12 @@
 #include <filesystem/fstream.hpp>
 
 #include <dlib/image_processing/frontal_face_detector.h>
-#include "/usr/include/postgresql/libpq-fe.h"
+
+#include "postgres/include/libpq-fe.h"
 
 #ifndef CONFIG_DIR
 #define CONFIG_DIR "~"
 #endif
-
-#define QUIT -1
-#define MAIN_MENU 0
-#define SELECT_MENU 1
-#define INSERT_MENU 2
-#define UPDATE_MENU 3
-#define DELETE_MENU 4
-#define MAX_DB_STATEMENT_BUFFER_LENGTH 5000
-#define MAX_COMMAND_BUFFER_LENGTH 25
-#define MAX_STUDENT_FIRST_NAME_LENGTH 100
-#define MAX_STUDENT_LAST_NAME_LENGTH 100
-#define MAX_STUDENT_ID_LENGTH 25
 
 using namespace std;
 
@@ -137,63 +127,51 @@ void create_directory_from_file(string output_path)
 	}
 }
 
-void write_out_landmarks(const string& outfeatures, const LandmarkDetector::CLNF& clnf_model)
+void write_out_landmarks(const LandmarkDetector::CLNF& clnf_model, string video_id, string frame_id, const cv::Vec6d& pose)
 {
-	create_directory_from_file(outfeatures);
-	std::ofstream featuresFile;
-	featuresFile.open(outfeatures);
-
-	if (featuresFile.is_open())
-	{
-		int n = clnf_model.patch_experts.visibilities[0][0].rows;
-		featuresFile << "npoints: " << n << endl;
-
-		for (int i = 0; i < n; ++i)
-		{
-			// FacialLandmarks: output a string of points x1,y1,x2,y2,x3,y3,x4,y4
-			// EyePoints:       output lx1,ly1,rx2,ry2 (not in this file)
-			// output frame #
-			// output video id
-			// primary key -> videoId_frameNum
-			// "SELECT * FROM video_table WHERE video_frame = ' " + videoId + "_" + frameId + "';"; // return a row with data points
-			// row[0] = video_frame
-			// row[1] = facial points string
-			// row[2] = eye points string
-			// "INSERT INTO video_table ();"
-			featuresFile << clnf_model.detected_landmarks.at<double>(i) + 1 << " " << clnf_model.detected_landmarks.at<double>(i + n) + 1 << endl;
-		}
-		
-
-
-		featuresFile.close();
-	}
-}
-
-int main (int argc, char **argv)
-{
-		
-	//Convert arguments to more convenient vector form
-	vector<string> arguments = get_arguments(argc, argv);
-
-
-
+	// Connect to DB, although this should really be done in main
 	PGconn   *db_connection;
 	PGresult *db_result;
-	char db_statement[MAX_DB_STATEMENT_BUFFER_LENGTH], 
-	command_buffer[MAX_COMMAND_BUFFER_LENGTH];
-	const char *parameter_values[2];
-	int parameter_lengths[2];
-	int parameter_formats[2];
-	int menu, command, row, num_rows;
+
 	db_connection = PQconnectdb("host = 'localhost' dbname = 'huevos_ranchero' user = 'postgres' password = 'student'");
 
-	if (PQstatus(db_connection) != CONNECTION_OK)
-	{
-		printf ("Connection to database failed: %s", 
+	// Check DB connection is gucci
+	if (PQstatus(db_connection) != CONNECTION_OK) {
+		printf ("Connection to database failed: %s",
 		PQerrorMessage(db_connection));
 		PQfinish (db_connection);
 		exit (EXIT_FAILURE);
 	}
+
+	int n = clnf_model.patch_experts.visibilities[0][0].rows;
+	string points;
+
+	// Loop through facial landmark points and create a string we can push to DB
+	for (int i = 0; i < n; ++i) {
+		points += to_string(clnf_model.detected_landmarks.at<double>(i)) + " " + to_string(clnf_model.detected_landmarks.at<double>(i + n));
+		if (i < n - 1) {
+			points += ",";
+		}
+	}
+
+	// Create DB insertion query
+	string db_insertion = "insert into framedata (video_id, frame_id, facial_points, eye_points, yaw, pitch, roll) values (" + video_id + ", " + frame_id + ", '" + points + "', 'd', " + to_string(pose[4]) + ", " + to_string(pose[5]) + ", " + to_string(pose[3]) + ");";
+
+	// Execute query
+    db_result = PQexecParams (db_connection, db_insertion.c_str(), 0, NULL, NULL, NULL, NULL, 0);
+
+    if (PQresultStatus(db_result) != PGRES_COMMAND_OK) {
+      printf ("Postgres error: %s\n", PQerrorMessage(db_connection));
+    } else {
+      PQclear(db_result);
+    }
+}
+
+int main (int argc, char **argv)
+{
+
+	//Convert arguments to more convenient vector form
+	vector<string> arguments = get_arguments(argc, argv);
 
 	// Search paths
 	boost::filesystem::path config_path = boost::filesystem::path(CONFIG_DIR);
@@ -207,6 +185,26 @@ int main (int argc, char **argv)
 	
 	LandmarkDetector::get_image_input_output_params(files, output_landmark_locations, output_pose_locations, output_images, bounding_boxes, arguments);
 	LandmarkDetector::FaceModelParameters det_parameters(arguments);
+
+	// No need to validate detections, as we're not doing tracking
+	det_parameters.validate_detections = false;
+
+	// Grab camera parameters if provided (only used for pose and eye gaze and are quite important for accurate estimates)
+	float fx = 0, fy = 0, cx = 0, cy = 0;
+	int device = -1;
+	LandmarkDetector::get_camera_params(device, fx, fy, cx, cy, arguments);
+
+	// If cx (optical axis centre) is undefined will use the image size/2 as an estimate
+	bool cx_undefined = false;
+	bool fx_undefined = false;
+	if (cx == 0 || cy == 0)
+	{
+		cx_undefined = true;
+	}
+	if (fx == 0 || fy == 0)
+	{
+		fx_undefined = true;
+	}
 
 	// The modules that are being used for tracking
 	cout << "Loading the model" << endl;
@@ -230,10 +228,25 @@ int main (int argc, char **argv)
 			return 1;
 		}
 
-		
 		// Making sure the image is in uchar grayscale
 		cv::Mat_<uchar> grayscale_image;
 		convert_to_grayscale(read_image, grayscale_image);
+
+		// If optical centers are not defined just use center of image
+		if (cx_undefined)
+		{
+			cx = grayscale_image.cols / 2.0f;
+			cy = grayscale_image.rows / 2.0f;
+		}
+		// Use a rough guess-timate of focal length
+		if (fx_undefined)
+		{
+			fx = 500 * (grayscale_image.cols / 640.0);
+			fy = 500 * (grayscale_image.rows / 480.0);
+
+			fx = (fx + fy) / 2.0;
+			fy = fx;
+		}
 
 		// if no pose defined we just use a face detector
 		if(bounding_boxes.empty())
@@ -257,26 +270,23 @@ int main (int argc, char **argv)
 			// perform landmark detection for every face detected
 			for(size_t face=0; face < face_detections.size(); ++face)
 			{
+
+				// Estimate head pose and eye gaze
+				cv::Vec6d headPose = LandmarkDetector::GetCorrectedPoseWorld(clnf_model, fx, fy, cx, cy);
+
 				// if there are multiple detections go through them
 				bool success = LandmarkDetector::DetectLandmarksInImage(grayscale_image, face_detections[face], clnf_model, det_parameters);
 
 				// Writing out the detected landmarks (in an OS independent manner)
 				if(!output_landmark_locations.empty())
 				{
-					char name[100];
-					// append detection number (in case multiple faces are detected)
-					sprintf(name, "_det_%d", face_det);
-
-					// Construct the output filename
-					boost::filesystem::path slash("/");
-					std::string preferredSlash = slash.make_preferred().string();
-
 					boost::filesystem::path out_feat_path(output_landmark_locations.at(i));
 					boost::filesystem::path dir = out_feat_path.parent_path();
 					boost::filesystem::path fname = out_feat_path.filename().replace_extension("");
-					boost::filesystem::path ext = out_feat_path.extension();
-					string outfeatures = dir.string() + preferredSlash + fname.string() + string(name) + ext.string();
-					write_out_landmarks(outfeatures, clnf_model);
+
+					string strarg(argv[2]);
+					std::size_t found = strarg.find_last_of("/\\");
+					write_out_landmarks(clnf_model, strarg.substr(found+1), fname.string(), headPose);
 				}
 
 				if(success)
@@ -286,18 +296,6 @@ int main (int argc, char **argv)
 
 			}
 		}
-		else
-		{
-			// Have provided bounding boxes
-			LandmarkDetector::DetectLandmarksInImage(grayscale_image, bounding_boxes[i], clnf_model, det_parameters);
-
-			// Writing out the detected landmarks
-			if(!output_landmark_locations.empty())
-			{
-				string outfeatures = output_landmark_locations.at(i);
-				write_out_landmarks(outfeatures, clnf_model);
-			}
-		}				
 
 	}
 	return 0;
