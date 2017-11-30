@@ -14,34 +14,68 @@ class Members extends Component {
 
 		this.state = {
 			inputValue : 'Only .mp4 files allowed.',
-			data: [{
-				id: 1,
+			data: [
+			/*{
+				id: 100,
 				name: "test",
 				date: currentTime
 			}, {
-				id: 2,
+				id: 200,
 				name: "test2",
 				date: currentTime
 			}, {
-				id: 3,
+				id: 300,
 				name: "test3",
 				date: currentTime
-			}],
+			}*/
+			],
 			rows: [],
 			fields: ['id', 'name', 'date']
 		}
 
 		this.video = this.video.bind(this);
+		this.getVideos = this.getVideos.bind(this);
 	}
 
 	componentWillMount(){
-		this.video();
+		this.getVideos();
+		//this.video();
+	}
+
+	getVideos(){
+		var that = this;
+		var getvids = new Request('http://localhost:3001/api/get-videos?username=' + this.props.username, {
+			method: 'GET'
+		});
+
+		fetch(getvids)
+		.then(function(response){
+			if(response.status === 200){
+				response.json()
+				.then(function(datas){
+					for(const i in datas){
+						that.state.data.push(
+						{
+							id : datas[i].id,
+							name: datas[i].file_name,
+							date: datas[i].date
+						});
+					}
+					console.log(that.state.data);
+					that.video();
+				});
+				//alert("works");
+			} else {
+				//alert("Error getting user videos");
+			}
+		});
 	}
 
 	video(){
 		//console.log("HEYY");
 		var that = this;
 		let fields = ['id', 'name', 'date'];
+		this.state.rows = [];
 		this.state.data.forEach(function(data){
 			that.state.rows.push(
 				<VideoTable key={data.id} 
@@ -50,6 +84,7 @@ class Members extends Component {
 				dataOrder={fields} 
 				/>);
 		});
+		this.setState(this.state);
 		console.log(this.state.rows);
 	}
 
@@ -82,6 +117,7 @@ class Members extends Component {
 	}
 
 	upload = e => {
+		var that = this;
 		console.log(this.fileName.files[0]);
 		e.preventDefault();
 
@@ -94,6 +130,7 @@ class Members extends Component {
 				alert(err);
 		return;
 	}
+	that.getVideos();
 	alert("File uploaded successfully!");
 });
 
@@ -149,7 +186,7 @@ render(){
 		<Table bordered condensed hover>
 		<thead>
 		<tr>
-		<th>#</th>
+		<th>ID#</th>
 		<th>Name</th>
 		<th>Date</th>
 		</tr>
@@ -159,34 +196,6 @@ render(){
 		{this.state.rows}
 		</tbody>
 		</Table>
-
-		<Table bordered condensed hover>
-		<thead>
-		<tr>
-		<th>#</th>
-		<th>Name</th>
-		<th>Date</th>
-		</tr>
-		</thead>
-		<tbody>
-		<tr>
-		<td>1</td>
-		<td>Video 1</td>
-		<td>test</td>
-		</tr>
-		<tr>
-		<td>2</td>
-		<td>Video 2</td>
-		<td>test2</td>
-		</tr>
-		<tr>
-		<td>3</td>
-		<td>Video 3</td>
-		<td>test3</td>
-		</tr>
-		</tbody>
-		</Table>
-
 
 		</Panel>
 		</div>

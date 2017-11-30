@@ -76,12 +76,50 @@ app.use(function(req, res, next) {
 });
 
 app.use(fileUpload({
-    limits: { fileSize: 50 * 1024 * 1024 },
+	limits: { fileSize: 50 * 1024 * 1024 },
 }));
+
+app.get('/api/get-videos', (req, res) => {
+	var username = req.query.username;
+	console.log(username);
+	pool.connect(function(err, db, done){
+		if(err){
+			console.log(err);
+			return res.status(404).send(err);
+		} else {
+			db.query("SELECT id FROM userdata WHERE username='" + username + "'", function(err, table) {
+				//done();
+				if(err){
+					console.log(err);
+					return res.status(400).send(err);
+				} else {
+					var user_id = table.rows[0].id;
+					console.log(user_id);
+					db.query("SELECT * FROM uservideos WHERE user_id=" + user_id + ";", function(err, table2) {
+						if(err){
+							console.log(err);
+							return res.status(400).send(err);
+						} else {
+							if(table2.rows.length > 0){
+								console.log(table2.rows);
+								return res.status(200).send(table2.rows);
+							} else {
+								return res.status(400).send(table2.rows);
+							}
+						}
+					});
+
+				}
+				//db.end();
+			});
+		}
+	});
+});
 
 app.post('/api/upload', function(req, res) {
 	var username = req.body.username;
-console.log(req);
+	var timestamp = req._startTime;
+	//console.log(req);
 	if (!req.files){
 		console.log(req.files);
 		console.log('No files uploaded.');
@@ -91,20 +129,68 @@ console.log(req);
 	let videoFile = req.files.videoFile;
 
 	var filename = req.files.videoFile.name;
+	var newFilename = filename;
+	console.log(filename);
 
 	mkdirp(__dirname + '/upload/' + username, function (err) {
 		if (err) console.error(err)
 			else console.log('Created folder directory for: ' + username)
 		});
 
-	videoFile.mv(__dirname + '/upload/' + username + '/' + filename, function(err) {
-		if (err){
-			return res.status(500).send(err);
+	pool.connect(function(err, db, done){
+		if(err){
+			console.log(err);
+			return res.status(404).send(err);
+		} else {
+			db.query("SELECT id FROM userdata WHERE username='" + username + "'", function(err, table) {
+				done();
+				if(err){
+					console.log(err);
+					return res.status(400).send(err);
+				} else {
+					if(table.rows.length > 0){
+						db.query("INSERT INTO uservideos (user_id, date, file_name) VALUES (" + table.rows[0].id + ", '" + timestamp + "', '" + filename + "');", function(err, table2) {
+							//done();
+							if(err){
+								console.log(err);
+								return;
+							} else {
+								console.log("Inserted " + table.rows[0].id + " into uservideos table");
+								return;
+							}
+						});
+
+						db.query("SELECT MAX(id) as last_id FROM uservideos WHERE user_id=" + table.rows[0].id + ";", function(err, table3) {
+							if(err){
+								console.log(err);
+								return;
+							} else {
+								console.log("Got max id=" + table3.rows[0].last_id);
+								newFilename = table3.rows[0].last_id + ".mp4";
+
+								console.log(filename);
+								videoFile.mv(__dirname + '/upload/' + username + '/' + newFilename, function(err) {
+									if (err){
+										return res.status(500).send(err);
+									}
+
+									console.log('File uploaded!');
+									return res.sendStatus(200);
+								});
+								return;
+							}
+						});
+
+						return;
+					} else {
+						return res.status(400).send(table.rows);
+					}
+				}
+				db.end();
+			});
 		}
-		console.log('File uploaded!');
-		//res.send('File uploaded!');
-		res.sendStatus(200);
 	});
+
 });
 
 app.post('/api/login', function(request, response){
