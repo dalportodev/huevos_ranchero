@@ -15,43 +15,8 @@ let pool = new pg.Pool({
 	port: 5432,
 	max: 10,
  	//idleTimeoutMillis: 1000, // close idle clients after 1 second
-  	//connectionTimeoutMillis: 1000 // return an error after 1 second if connection could not be established
+  	connectionTimeoutMillis: 10000 // return an error after 1 second if connection could not be established
   });
-
-/*
-pool.connect((err, db, done) => {
-	if(err){
-		return console.log(err);
-	} else {
-		
-		db.query('SELECT * from userdata', (err, table) => {
-			done();
-			if(err) {
-				return console.log(err);
-			} else {
-				console.log(table.rows)
-			}
-		});
-		
-
-		
-		var username = 'test';
-		var password = 'test123';
-		var first_name = 'tester';
-		var last_name = '123';
-		db.query('INSERT INTO userdata (username, password, first_name, last_name) VALUES($1, $2, $3, $4)', [username, password, first_name, last_name], (err, table) => {
-			done();
-			if(err) {
-				return console.log(err);
-			} else {
-				console.log(table.rows);
-				db.end();
-			}
-		});
-		
-	}
-});
-*/
 
 let app = express();
 
@@ -82,37 +47,11 @@ app.use(fileUpload({
 app.get('/api/get-videos', (req, res) => {
 	var username = req.query.username;
 	console.log(username);
-	pool.connect(function(err, db, done){
-		if(err){
-			console.log(err);
-			return res.status(404).send(err);
-		} else {
-			db.query("SELECT id FROM userdata WHERE username='" + username + "'", function(err, table) {
-				//done();
-				if(err){
-					console.log(err);
-					return res.status(400).send(err);
-				} else {
-					var user_id = table.rows[0].id;
-					console.log(user_id);
-					db.query("SELECT * FROM uservideos WHERE user_id=" + user_id + ";", function(err, table2) {
-						if(err){
-							console.log(err);
-							return res.status(400).send(err);
-						} else {
-							if(table2.rows.length > 0){
-								console.log(table2.rows);
-								return res.status(200).send(table2.rows);
-							} else {
-								return res.status(400).send(table2.rows);
-							}
-						}
-					});
-
-				}
-				//db.end();
-			});
-		}
+	pool.query("SELECT id FROM userdata WHERE username='" + username + "'", (err, table) => {
+		var user_id = table.rows[0].id;
+		pool.query("SELECT * FROM uservideos WHERE user_id=" + user_id + ";", (err, table2) => {
+			return res.status(200).send(table2.rows);
+		});
 	});
 });
 
@@ -129,7 +68,6 @@ app.post('/api/upload', function(req, res) {
 	let videoFile = req.files.videoFile;
 
 	var filename = req.files.videoFile.name;
-	var newFilename = filename;
 	console.log(filename);
 
 	mkdirp(__dirname + '/upload/' + username, function (err) {
@@ -137,57 +75,25 @@ app.post('/api/upload', function(req, res) {
 			else console.log('Created folder directory for: ' + username)
 		});
 
-	pool.connect(function(err, db, done){
-		if(err){
-			console.log(err);
-			return res.status(404).send(err);
-		} else {
-			db.query("SELECT id FROM userdata WHERE username='" + username + "'", function(err, table) {
-				done();
-				if(err){
-					console.log(err);
-					return res.status(400).send(err);
-				} else {
-					if(table.rows.length > 0){
-						db.query("INSERT INTO uservideos (user_id, date, file_name) VALUES (" + table.rows[0].id + ", '" + timestamp + "', '" + filename + "');", function(err, table2) {
-							//done();
-							if(err){
-								console.log(err);
-								return;
-							} else {
-								console.log("Inserted " + table.rows[0].id + " into uservideos table");
-								return;
-							}
-						});
-
-						db.query("SELECT MAX(id) as last_id FROM uservideos WHERE user_id=" + table.rows[0].id + ";", function(err, table3) {
-							if(err){
-								console.log(err);
-								return;
-							} else {
-								console.log("Got max id=" + table3.rows[0].last_id);
-								newFilename = table3.rows[0].last_id + ".mp4";
-
-								console.log(filename);
-								videoFile.mv(__dirname + '/upload/' + username + '/' + newFilename, function(err) {
-									if (err){
-										return res.status(500).send(err);
-									}
-
-									console.log('File uploaded!');
-									return res.sendStatus(200);
-								});
-								return;
-							}
-						});
-
-						return;
-					} else {
-						return res.status(400).send(table.rows);
-					}
-				}
-				db.end();
+	pool.query("SELECT id FROM userdata WHERE username='" + username + "'", (err, table) => {
+		if(table.rows.length > 0){
+			pool.query("INSERT INTO uservideos (user_id, date, file_name) VALUES (" + table.rows[0].id + ", '" + timestamp + "', '" + filename + "');", (err, table2) => {
+				console.log("Inserted " + table.rows[0].id + " into uservideos table");
 			});
+
+			pool.query("SELECT MAX(id) as last_id FROM uservideos WHERE user_id=" + table.rows[0].id + ";", (err, table3) => {
+				let newFilename = table3.rows[0].last_id + ".mp4";
+
+				videoFile.mv(__dirname + '/upload/' + username + '/' + newFilename, function(err) {
+					if (err){
+						return res.status(500).send(err);
+					}
+					console.log('File uploaded!');
+					return res.sendStatus(200);
+				});
+			});
+		} else {
+			return res.status(400).send(err);
 		}
 	});
 
@@ -210,118 +116,42 @@ app.post('/api/login', function(request, response){
 	console.log(ip);
 	console.log(timestamp);
 
-	pool.connect(function(err, db, done){
-		if(err){
-			console.log(err);
-			return response.status(404).send(err);
-		} else {
-			db.query("SELECT * FROM userdata WHERE username='" + username + "'", function(err, table) {
-				done();
-				if(err){
-					console.log(err);
-					return response.status(400).send(err);
-				} else {
-					if(table.rowCount > 0){
-						if(password == table.rows[0].password){
+	pool.query("SELECT * FROM userdata WHERE username='" + username + "'", (err, table) => {
+		if(table.rows.length > 0){
+			if(password == table.rows[0].password){
+				pool.query("UPDATE userdata SET last_ip='"+ ip + "' WHERE username='" + username + "'", (err, result) => {
+					console.log('IP updated with: ' + ip);
+				});
 
-							db.query("UPDATE userdata SET last_ip='"+ ip + "' WHERE username='" + username + "'", (err, table) => {
-    							//done();
-    							if(err) {
-    								console.log(err.detail);
-    								return;
-    							} else {
-    								console.log('IP updated with: ' + ip);
-    								return;
-    							}
-    							//db.end();
-    						});
+				pool.query("UPDATE userdata SET last_login='"+ timestamp + "' WHERE username='" + username + "'", (err, result) => {
+					console.log('Last login updated with: ' + timestamp);
+				});
 
-
-							db.query("UPDATE userdata SET last_login='"+ timestamp + "' WHERE username='" + username + "'", (err, table) => {
-    							//done();
-    							if(err) {
-    								console.log(err.detail);
-    								return;
-    							} else {
-    								console.log('Last login updated with: ' + timestamp);
-    								return;
-    							}
-    							//db.end();
-    						});
-
-
-							return response.send({
-								'success': true,
-								'message': table.rows[0].username
-							});
-						} else {
-							return response.send({
-								'success': false,
-								'message': 'Invalid username and password combination'
-							});
-						}
-					} else {
-						return response.status(400).send(table.rows);
-					}
-
-				}
-				db.end();
-			});
+				return response.send({
+					'success': true,
+					'message': table.rows[0].username
+				});
+			} else {
+				return response.send({
+					'success': false,
+					'message': 'Invalid username and password combination'
+				});
+			}
 		}
 	});
-
 
 });
 
 app.get('/api/check-username', function(request, response){
 	var username = request.query.username;
 	console.log(username);
-	pool.connect(function(err, db, done){
-		if(err){
-			console.log(err);
-			return response.status(404).send(err);
-		} else {
-			db.query("SELECT username FROM userdata WHERE username='" + username + "'", function(err, table) {
-				done();
-				if(err){
-					console.log(err);
-					return response.status(400).send(err);
-				} else {
-					if(table.rows.length > 0){
-						return response.status(200).send(table.rows);
-					} else {
-						return response.status(400).send(table.rows);
-					}
-					
-				}
-				db.end();
-			});
-		}
-	});
-});
 
-app.get('/api/get-userinfo', function(request, response){
-	var username = request.query.username;
-	console.log(username);
-	pool.connect(function(err, db, done){
-		if(err){
-			console.log(err);
-			return response.status(404).send(err);
+	pool.query("SELECT username FROM userdata WHERE username='" + username + "'", (err, table) => {
+		if(table.rows.length > 0){
+			return response.status(200).send(table.rows);
 		} else {
-			db.query("SELECT username FROM userdata WHERE username='" + username + "'", function(err, table) {
-				done();
-				if(err){
-					console.log(err);
-					return response.status(400).send(err);
-				} else {
-					if(table.rows.length > 0){
-						return response.status(200).send(table.rows);
-					} else {
-						return response.status(400).send(table.rows);
-					}
-					
-				}
-				db.end();
+			return response.send({
+				'success': false
 			});
 		}
 	});
@@ -333,28 +163,15 @@ app.post('/api/new-user', function(request, response){
 	var first_name = request.body.first_name;
 	var last_name = request.body.last_name;
 	console.log(request.body);
-	pool.connect((err, db, done) => {
-		if(err){
-			console.log(err.detail);
-			return response.status(400).send(err);
-		} else {
-			db.query('INSERT INTO userdata (username, password, first_name, last_name) VALUES($1, $2, $3, $4)', [username, password, first_name, last_name], (err, table) => {
-				done();
-				if(err) {
-					console.log(err.detail);
-					return response.status(400).send(err);
-				} else {
-					console.log(table.rows);
-					console.log("Data inserted");
-					return response.status(200).json({
-						message: 'User successfully registered'
-					});
-				//db.end();
-			}
-			db.end();
+
+	pool.query('INSERT INTO userdata (username, password, first_name, last_name) VALUES($1, $2, $3, $4)', [username, password, first_name, last_name], (err, table) => {
+		console.log(table.rows);
+		console.log("Data inserted");
+		return response.status(200).json({
+			message: 'User successfully registered'
 		});
-		}
 	});
+
 });
 
 app.listen(PORT, () => console.log('Listening on port ' + PORT));

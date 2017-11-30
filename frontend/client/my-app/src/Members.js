@@ -13,6 +13,8 @@ class Members extends Component {
 		super(props);
 
 		this.state = {
+			uploadError: false,
+			uploadSuccess: false,
 			inputValue : 'Only .mp4 files allowed.',
 			data: [
 			/*{
@@ -35,11 +37,20 @@ class Members extends Component {
 
 		this.video = this.video.bind(this);
 		this.getVideos = this.getVideos.bind(this);
+		this.handleAlertDismiss = this.handleAlertDismiss.bind(this);
+	}
+
+	handleAlertDismiss(){
+		this.setState({ uploadError: false });
 	}
 
 	componentWillMount(){
 		this.getVideos();
 		//this.video();
+	}
+
+	componentDidMount(){
+		this.fileName.value = '';
 	}
 
 	getVideos(){
@@ -53,7 +64,8 @@ class Members extends Component {
 			if(response.status === 200){
 				response.json()
 				.then(function(datas){
-					for(const i in datas){
+					that.setState({ data: [] });
+					for(let i in datas){
 						that.state.data.push(
 						{
 							id : datas[i].id,
@@ -61,7 +73,7 @@ class Members extends Component {
 							date: datas[i].date
 						});
 					}
-					console.log(that.state.data);
+					//console.log(that.state.data);
 					that.video();
 				});
 				//alert("works");
@@ -72,10 +84,9 @@ class Members extends Component {
 	}
 
 	video(){
-		//console.log("HEYY");
 		var that = this;
 		let fields = ['id', 'name', 'date'];
-		this.state.rows = [];
+		this.setState({ rows: [] });
 		this.state.data.forEach(function(data){
 			that.state.rows.push(
 				<VideoTable key={data.id} 
@@ -85,7 +96,7 @@ class Members extends Component {
 				/>);
 		});
 		this.setState(this.state);
-		console.log(this.state.rows);
+		//console.log(this.state.rows);
 	}
 
 	logout(){
@@ -98,9 +109,9 @@ class Members extends Component {
 	browse(){
 		if(typeof this.fileName.files[0] !== 'undefined'){
 			var ext = this.fileName.files[0].name.match(/\.(.+)$/)[1];
-			console.log(ext);
+			//console.log(ext);
 
-			if(ext == 'mp4'){
+			if(ext === 'mp4'){
 				this.setState({
 					inputValue: this.fileName.files[0].name
 				});
@@ -117,90 +128,118 @@ class Members extends Component {
 	}
 
 	upload = e => {
+		e.preventDefault();
 		var that = this;
 		console.log(this.fileName.files[0]);
-		e.preventDefault();
+		if(typeof this.fileName.files[0] !== 'undefined'){
+			request
+			.post('http://localhost:3001/api/upload')
+			.attach('videoFile', this.fileName.files[0])
+			.field('username', this.props.username)
+			.end(function(err, res){
+				if(err){
+					that.setState({ uploadError: true });
+					return;
+				} else {
+					that.getVideos();
+					that.setState({
+						inputValue: 'Only .mp4 files allowed.',
+						uploadSuccess: true,
+						uploadError: false
+					});
+					that.fileName.value = '';
+					//console.log(that.fileName.files[0]);
+				}
 
-		request
-		.post('http://localhost:3001/api/upload')
-		.attach('videoFile', this.fileName.files[0])
-		.field('username', this.props.username)
-		.end(function(err, res){
-			if(err){
-				alert(err);
-		return;
+			});
+		} else {
+			this.setState({ uploadError: true, uploadSuccess: false });
+		}
+
 	}
-	that.getVideos();
-	alert("File uploaded successfully!");
-});
 
-}
-
-render(){
-	return (
-		<div>
-		<div className="headingBlock">
-		<div className="logoutDiv">
-		<Button bsStyle="danger" className="logout" onClick={this.logout.bind(this)}>Sign out</Button>
-		</div>
-		<img src={logo} className="logo" alt="huevos_ranchero"/>
-		<h3 className="center">Welcome {this.props.username}!</h3>
-		</div>
-		<Panel className="panel innerBlock" bsStyle="primary" header={
+	render(){
+		return (
 			<div>
-			<h4>Videos</h4>
+			<div className="headingBlock">
+			<div className="logoutDiv">
+			<Button bsStyle="danger" className="logout" onClick={this.logout.bind(this)}>Sign out</Button>
 			</div>
-		}>
+			<img src={logo} className="logo" alt="huevos_ranchero"/>
+			<h3 className="center">Welcome {this.props.username}!</h3>
+			</div>
+			<Panel className="panel innerBlock" bsStyle="primary" header={
+				<div>
+				<h4>Videos</h4>
+				</div>
+			}>
+
+			{
+				this.state.uploadSuccess
+				?         
+				<Alert bsStyle="success" className="center" onDismiss={this.handleAlertDismiss}>
+				File uploaded successfully!
+				</Alert>
+				: null
+			}
+
+			{
+				this.state.uploadError
+				?         
+				<Alert bsStyle="danger" className="center" onDismiss={this.handleAlertDismiss}>
+				Please select a .mp4 file.
+				</Alert>
+				: null
+			}
+
+			<Form onSubmit={this.upload.bind(this)} encType='multipart/form-data' ref='uploadForm' id='uploadForm' method='POST' action='http://localhost:3001/api/upload'>
+			<input type="hidden" name="username" value={this.props.username} />
 
 
-		<Form onSubmit={this.upload.bind(this)} encType='multipart/form-data' ref='uploadForm' id='uploadForm' method='POST' action='http://localhost:3001/api/upload'>
-		<input type="hidden" name="username" value={this.props.username} />
+			<div className="uploadBlock">
+			<div className="input-group">
+			<label className="input-group-btn">
+			<span className="btn btn-primary">
+			Browse... 
+			<FormControl 
+			name="videoFile"
+			inputRef={input => this.fileName = input} 
+			type="file"
+			accept="video/mp4"
+			onChange={this.browse.bind(this)} 
+			style={displayNone}/>
+			</span>
+			</label>
+			<input type="text" className="form-control" value={this.state.inputValue} disabled />
+			</div>
+			</div>
+
+			<Button className="upload" bsStyle="primary" type="submit">Upload video</Button>
+			</Form>
 
 
-		<div className="uploadBlock">
-		<div className="input-group">
-		<label className="input-group-btn">
-		<span className="btn btn-primary">
-		Browse... 
-		<FormControl 
-		name="videoFile"
-		inputRef={input => this.fileName = input} 
-		type="file"
-		accept="video/mp4"
-		onChange={this.browse.bind(this)} 
-		style={displayNone}/>
-		</span>
-		</label>
-		<input type="text" className="form-control" value={this.state.inputValue} disabled />
-		</div>
-		</div>
+			<br/>
+			<br/>
+			<br/>
 
-		<Button className="upload" bsStyle="primary" type="submit">Upload video</Button>
-		</Form>
+			<Table bordered condensed hover>
+			<thead>
+			<tr>
+			<th>ID#</th>
+			<th>Name</th>
+			<th>Date</th>
+			</tr>
+			</thead>
 
+			<tbody>
+			{this.state.rows}
+			</tbody>
+			</Table>
 
-		<br/>
-		<br/>
-		<br/>
-
-		<Table bordered condensed hover>
-		<thead>
-		<tr>
-		<th>ID#</th>
-		<th>Name</th>
-		<th>Date</th>
-		</tr>
-		</thead>
-
-		<tbody>
-		{this.state.rows}
-		</tbody>
-		</Table>
-
-		</Panel>
-		</div>
-		);
-}
+			</Panel>
+			</div>
+			);
+	}
 }
 
 const displayNone = {

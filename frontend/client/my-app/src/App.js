@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import logo from './huevosranchero.png';
-import './App.css';
+import './css/App.css';
 import { Alert, Form, FormControl, Button } from 'react-bootstrap';
 import { connect } from 'react-redux';
 
-import { Link } from 'react-router-dom';
+//import { Link } from 'react-router-dom';
 
 class App extends Component {
 	constructor(props) {
@@ -22,6 +22,38 @@ class App extends Component {
     // This binding is necessary to make `this` work in the callback
     this.switchLogin = this.switchLogin.bind(this);
     this.logInButton = this.logInButton.bind(this);
+    this.dismissLoginError = this.dismissLoginError.bind(this);
+    this.dismissRegisterError = this.dismissRegisterError.bind(this);
+    this.dismissInvalidLoginError = this.dismissInvalidLoginError.bind(this);
+    this.dismissUsernameExistsError = this.dismissUsernameExistsError.bind(this);
+}
+
+dismissLoginError(){
+	this.setState(
+	{
+		loginError: false
+	});
+}
+
+dismissRegisterError(){
+	this.setState(
+	{
+		registerError: false
+	});
+}
+
+dismissInvalidLoginError(){
+	this.setState(
+	{
+		invalidLoginError: false
+	});
+}
+
+dismissUsernameExistsError(){
+	this.setState(
+	{
+		usernameExistsError: false
+	});
 }
 
 navigate(){
@@ -65,9 +97,9 @@ login() {
 	}
 	var login = new Request('http://localhost:3001/api/login', {
 		method: 'POST',
-			headers: new Headers({ 'Content-Type': 'application/json' }),
-			body: JSON.stringify(data)
-		});
+		headers: new Headers({ 'Content-Type': 'application/json' }),
+		body: JSON.stringify(data)
+	});
 
 	fetch(login)
 	.then((response) => response.json())
@@ -172,7 +204,7 @@ render() {
 		{
 			this.state.invalidLoginError
 			?         
-			<Alert bsStyle="danger" onDismiss={this.handleAlertDismiss}>
+			<Alert bsStyle="danger" onDismiss={this.dismissInvalidLoginError}>
 			Invalid username and password combination, please try again.
 			</Alert>
 			: null
@@ -181,7 +213,7 @@ render() {
 		{
 			this.state.loginError
 			?         
-			<Alert bsStyle="danger" onDismiss={this.handleAlertDismiss}>
+			<Alert bsStyle="danger" onDismiss={this.dismissLoginError}>
 			Please enter a username and password.
 			</Alert>
 			: null
@@ -190,7 +222,7 @@ render() {
 		{
 			this.state.usernameExistsError
 			?         
-			<Alert bsStyle="danger" onDismiss={this.handleAlertDismiss}>
+			<Alert bsStyle="danger" onDismiss={this.dismissUsernameExistsError}>
 			Username already exists, please enter a new username.
 			</Alert>
 			: null
@@ -199,7 +231,7 @@ render() {
 		{
 			this.state.registerError
 			?         
-			<Alert bsStyle="danger" onDismiss={this.handleAlertDismiss}>
+			<Alert bsStyle="danger" onDismiss={this.dismissRegisterError}>
 			Please fill all required fields.
 			</Alert>
 			: null
@@ -207,91 +239,91 @@ render() {
 
 		<div className={"LoginForm" + (this.state.registering ?  "": "-collapse")} >
 
-		<img src={logo} className="logo" alt="huevos_ranchero"/>
+			<img src={logo} className="logo" alt="huevos_ranchero"/>
 
-		<Form onSubmit={this.logInButton} className="FormLoginField">
+			<Form onSubmit={this.logInButton} className="FormLoginField">
 
-		{
-			this.state.registering
-			? 
-			<div className="notFilled1">
-			<span className="notFilled">*</span>
-			</div>
-			: null
-		}
+			{
+				this.state.registering
+				? 
+				<div className="notFilled1">
+				<span className="notFilled">*</span>
+				</div>
+				: null
+			}
 
-		<FormControl className="LoginField"
-		placeholder='Username'
-		inputRef={input => this.loginInput = input}
-		maxLength='16'
-		/>
-
-		{
-			this.state.registering
-			? 
-			<div className="notFilled1">
-			<span className="notFilled">*</span>
-			</div>
-			: null
-		}
-		<FormControl className="LoginField"
-		id="formControlsPassword"
-		placeholder="Password"
-		label="Password"
-		type="password"
-		maxLength='16'
-		inputRef={input => this.passwordInput = input}
-		/>
-
-		{
-			this.state.registering
-			? 
-			<div>
-
-			<div className="notFilled1">
-			<span className="notFilled">*</span>
-			</div>
 			<FormControl className="LoginField"
-			id="firstName"
-			placeholder="First Name"
+			placeholder='Username'
+			inputRef={input => this.loginInput = input}
 			maxLength='16'
-			inputRef={input => this.firstNameInput = input}
 			/>
 
-			<div className="notFilled1">
-			<span className="notFilled">*</span>
-			</div>
+			{
+				this.state.registering
+				? 
+				<div className="notFilled1">
+				<span className="notFilled">*</span>
+				</div>
+				: null
+			}
 			<FormControl className="LoginField"
-			id="lastName"
-			placeholder="Last Name"
+			id="formControlsPassword"
+			placeholder="Password"
+			label="Password"
+			type="password"
 			maxLength='16'
-			inputRef={input => this.lastNameInput = input}
+			inputRef={input => this.passwordInput = input}
 			/>
+
+			{
+				this.state.registering
+				? 
+				<div>
+
+				<div className="notFilled1">
+				<span className="notFilled">*</span>
+				</div>
+				<FormControl className="LoginField"
+				id="firstName"
+				placeholder="First Name"
+				maxLength='16'
+				inputRef={input => this.firstNameInput = input}
+				/>
+
+				<div className="notFilled1">
+				<span className="notFilled">*</span>
+				</div>
+				<FormControl className="LoginField"
+				id="lastName"
+				placeholder="Last Name"
+				maxLength='16'
+				inputRef={input => this.lastNameInput = input}
+				/>
+				</div>
+				: null
+			}
+
+
+			<Button type="submit" bsStyle={this.btnStyle} className="LoginField" >{this.btnText}</Button>
+			</Form>
+
 			</div>
-			: null
-		}
 
 
-		<Button type="submit" bsStyle={this.btnStyle} className="LoginField" >{this.btnText}</Button>
-		</Form>
+			<div className="BottomBar">
+			{
+				this.state.registering
+				? 
+				<p>Have an account? <button className="btn btn-link" onClick={this.switchLogin}>Log in</button></p>
+				: 
+				<p>Don't have an account? <button className="btn btn-link" onClick={this.switchLogin}>Sign up</button></p>
+			}
+			</div>	
+			</div>
 
-		</div>
-		
-
-		<div className="BottomBar">
-		{
-			this.state.registering
-			? 
-			<p>Have an account? <button className="btn btn-link" onClick={this.switchLogin}>Log in</button></p>
-			: 
-			<p>Don't have an account? <button className="btn btn-link" onClick={this.switchLogin}>Sign up</button></p>
-		}
-		</div>	
-		</div>
-
-		</div>
-		);
-}
+			</div>
+			);
+	}
 }
 
 const mapStateToProps = store => {
