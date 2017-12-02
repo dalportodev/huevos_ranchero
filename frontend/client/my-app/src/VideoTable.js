@@ -21,12 +21,6 @@ class VideoTable extends Component{
 			this.props.dataOrder
 			);
 	}
-
-	/*this.createRow(
-			this.props.tbodyIdKey,
-			this.props.rowData,
-			this.props.dataOrder
-			);*/
 }
 
 export default VideoTable;

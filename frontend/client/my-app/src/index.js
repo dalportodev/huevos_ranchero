@@ -5,7 +5,7 @@ import {createLogger} from 'redux-logger';
 import {autoRehydrate} from 'redux-persist';
 //import store from './containers/store';
 
-import './index.css';
+import './css/index.css';
 import App from './App';
 import Members from './Members';
 import RequireLogin from './RequireLogin';
