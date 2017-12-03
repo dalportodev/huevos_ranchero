@@ -8,7 +8,12 @@ class VideoTable extends Component{
 
 	createRow(tableRowID, data, dataOrder, cells = []){
 		for(var i in dataOrder){
-			cells.push(<td key={i}>{data[dataOrder[i]]}</td>);
+			if (i === "0") {
+				let url = "video?video=" + data[dataOrder[i]];
+				cells.push(<td key={i}><a href={url}>{data[dataOrder[i]]}</a></td>);
+			} else {
+				cells.push(<td key={i}>{data[dataOrder[i]]}</td>);
+			}
 		}
 
 		return(<tr key={i}>{cells}</tr>);

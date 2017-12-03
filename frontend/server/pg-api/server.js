@@ -1,16 +1,19 @@
-let express = require('express');
-let session = require('express-session');
-let fileUpload = require('express-fileupload');
-let bodyParser = require('body-parser');
-let morgan = require('morgan');
-let pg = require('pg');
-let mkdirp = require('mkdirp');
+const express = require('express');
+const session = require('express-session');
+const fileUpload = require('express-fileupload');
+const bodyParser = require('body-parser');
+const morgan = require('morgan');
+const pg = require('pg');
+const mkdirp = require('mkdirp');
+const shell = require('shelljs')
+const path = require('path');
+const fs = require('fs');
 const PORT = 3001;
 
 let pool = new pg.Pool({
 	host: 'localhost',
 	user: 'postgres',
-	password: 'admin2084',
+	password: 'student',
 	database: 'huevos_ranchero',
 	port: 5432,
 	max: 10,
@@ -70,31 +73,42 @@ app.post('/api/upload', function(req, res) {
 	var filename = req.files.videoFile.name;
 	console.log(filename);
 
-	mkdirp(__dirname + '/upload/' + username, function (err) {
-		if (err) console.error(err)
-			else console.log('Created folder directory for: ' + username)
-		});
+	pool.query("SELECT id FROM uservideos", (err, table) => {
+		let num_videos = table.rows.length;
 
-	pool.query("SELECT id FROM userdata WHERE username='" + username + "'", (err, table) => {
-		if(table.rows.length > 0){
-			pool.query("INSERT INTO uservideos (user_id, date, file_name) VALUES (" + table.rows[0].id + ", '" + timestamp + "', '" + filename + "');", (err, table2) => {
-				console.log("Inserted " + table.rows[0].id + " into uservideos table");
-			});
+		pool.query("SELECT id FROM userdata WHERE username='" + username + "'", (err, table) => {
+			if(table.rows.length > 0){
+				pool.query("INSERT INTO uservideos (user_id, date, file_name) VALUES (" + table.rows[0].id + ", '" + timestamp + "', '" + filename + "');", (err, table2) => {
+					console.log("Inserted " + table.rows[0].id + " into uservideos table");
+					
+					pool.query("SELECT MAX(id) as last_id FROM uservideos WHERE user_id=" + table.rows[0].id + ";", (err, table3) => {
+						
+						let video_id = table3.rows[0].last_id;
+						let newFilename = video_id + ".mp4";
 
-			pool.query("SELECT MAX(id) as last_id FROM uservideos WHERE user_id=" + table.rows[0].id + ";", (err, table3) => {
-				let newFilename = table3.rows[0].last_id + ".mp4";
+						//let newFilename = video_id + ".mp4";
+						mkdirp(__dirname + '/upload/videos/' + video_id, function (err) {
+							if (err) {
+								console.error(err);
+							} else {
+								console.log('Created folder directory for: ' + username);
 
-				videoFile.mv(__dirname + '/upload/' + username + '/' + newFilename, function(err) {
-					if (err){
-						return res.status(500).send(err);
-					}
-					console.log('File uploaded!');
-					return res.sendStatus(200);
+								videoFile.mv(__dirname + '/upload/videos/' + video_id + '/' + newFilename, function(err) {
+									if (err){
+										return res.status(500).send(err);
+									}
+									console.log('File uploaded!');
+									shell.exec("./upload/runScripts " + video_id);
+									return res.sendStatus(200);
+								});
+							}
+						});
+					});
 				});
-			});
-		} else {
-			return res.status(400).send(err);
-		}
+			} else {
+				return res.status(400).send(err);
+			}
+		});
 	});
 
 });
@@ -155,6 +169,73 @@ app.get('/api/check-username', function(request, response){
 			});
 		}
 	});
+});
+app.get('/api/get-video', function(req, res){
+	function startsWith(str, prefix) {
+	    return str.lastIndexOf(prefix, 0) === 0;
+	}
+
+	function endsWith(str, suffix) {
+	    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+	}
+	var video_id = req.query.video_id;
+	var path_to_video = __dirname + '/upload/videos/' + video_id + "/" + video_id + ".mp4"
+	console.log(path_to_video);
+
+	// Get the filename
+    var movieFileName = video_id + ".mp4";
+
+    var streamPath = path.resolve(path_to_video);
+    //Calculate the size of the file
+    var stat = fs.statSync(streamPath);
+    var total = stat.size;
+    var file;
+    var contentType = "video/mp4";
+
+    // Chunks based streaming
+    if (req.headers.range) {
+        var range = req.headers.range;
+        var parts = range.replace(/bytes=/, "").split("-");
+        var partialstart = parts[0];
+        var partialend = parts[1];
+
+        var start = parseInt(partialstart, 10);
+        var end = partialend ? parseInt(partialend, 10) : total - 1;
+        var chunksize = (end - start) + 1;
+        console.log('RANGE: ' + start + ' - ' + end + ' = ' + chunksize);
+
+        file = fs.createReadStream(streamPath, {
+            start: start,
+            end: end
+        });
+        res.writeHead(206, {
+            'Content-Range': 'bytes ' + start + '-' + end + '/' + total,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunksize,
+            'Content-Type': contentType
+        });
+        res.openedFile = file;
+        file.pipe(res);
+    } else {
+        console.log('ALL: ' + total);
+        file = fs.createReadStream(streamPath);
+        res.writeHead(200, {
+            'Content-Length': total,
+            'Content-Type': contentType
+        });
+        res.openedFile = file;
+        file.pipe(res);
+    }
+
+    res.on('close', function() {
+        console.log('response closed');
+        if (res.openedFile) {
+            res.openedFile.unpipe(this);
+            if (this.openedFile.fd) {
+                fs.close(this.openedFile.fd);
+            }
+        }
+    });
 });
 
 app.post('/api/new-user', function(request, response){

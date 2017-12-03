@@ -8,6 +8,7 @@ import {autoRehydrate} from 'redux-persist';
 import './css/index.css';
 import App from './App';
 import Members from './Members';
+import VideoPlayback from './VideoPlayback';
 import RequireLogin from './RequireLogin';
 import reducer from './reducers/user'
 
@@ -77,6 +78,7 @@ ReactDOM.render(
   >
 	<Route exact path="/" component={App} />
 	<Route path="/members" component={RequireLogin(Members)} />
+  <Route path="/video" component={RequireLogin(VideoPlayback)} />
 	</AnimatedSwitch>
 	</div>
 	</BrowserRouter>
