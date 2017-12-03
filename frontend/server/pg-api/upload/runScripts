@@ -1,0 +1,21 @@
+#!/bin/bash
+
+video_id=$1
+
+cd upload
+
+echo "extracting $video_id"
+./vm $video_id extract
+
+echo "detecting facial landmarks $video_id"
+./FaceLandmark -fdir "./videos/$video_id" -ofdir "./trash/" -oidir "./trash/" -wild
+
+echo "drawing mesh for $video_id"
+./FaceDrawer $video_id
+
+echo "building $video_id"
+./vm $video_id combine
+
+cd ..
+
+echo "done."
