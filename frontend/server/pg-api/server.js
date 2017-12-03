@@ -70,26 +70,26 @@ app.post('/api/upload', function(req, res) {
 	var filename = req.files.videoFile.name;
 	console.log(filename);
 
-	mkdirp(__dirname + '/upload/' + username, function (err) {
-		if (err) console.error(err)
-			else console.log('Created folder directory for: ' + username)
-		});
-
 	pool.query("SELECT id FROM userdata WHERE username='" + username + "'", (err, table) => {
 		if(table.rows.length > 0){
 			pool.query("INSERT INTO uservideos (user_id, date, file_name) VALUES (" + table.rows[0].id + ", '" + timestamp + "', '" + filename + "');", (err, table2) => {
 				console.log("Inserted " + table.rows[0].id + " into uservideos table");
-			});
 
-			pool.query("SELECT MAX(id) as last_id FROM uservideos WHERE user_id=" + table.rows[0].id + ";", (err, table3) => {
-				let newFilename = table3.rows[0].last_id + ".mp4";
+				pool.query("SELECT MAX(id) as last_id FROM uservideos WHERE user_id=" + table.rows[0].id + ";", (err, table3) => {
+					let newFilename = table3.rows[0].last_id + ".mp4";
 
-				videoFile.mv(__dirname + '/upload/' + username + '/' + newFilename, function(err) {
-					if (err){
-						return res.status(500).send(err);
-					}
-					console.log('File uploaded!');
-					return res.sendStatus(200);
+					mkdirp(__dirname + '/upload/' + username + '/' + table3.rows[0].last_id, function (err) {
+						if (err) console.error(err)
+							else console.log('Created folder directory /upload/' + username + '/'+ table3.rows[0].last_id)
+						});
+
+					videoFile.mv(__dirname + '/upload/' + username + '/' + table3.rows[0].last_id + '/' + newFilename, function(err) {
+						if (err){
+							return res.status(500).send(err);
+						}
+						console.log('File uploaded!');
+						return res.sendStatus(200);
+					});
 				});
 			});
 		} else {
