@@ -38,10 +38,15 @@ class Members extends Component {
 		this.video = this.video.bind(this);
 		this.getVideos = this.getVideos.bind(this);
 		this.handleAlertDismiss = this.handleAlertDismiss.bind(this);
+		this.dismissUploadSuccess = this.dismissUploadSuccess.bind(this);
 	}
 
 	handleAlertDismiss(){
 		this.setState({ uploadError: false });
+	}
+
+	dismissUploadSuccess(){
+		this.setState({ uploadSuccess: false });
 	}
 
 	componentWillMount(){
@@ -177,7 +182,7 @@ class Members extends Component {
 			{
 				this.state.uploadSuccess
 				?         
-				<Alert bsStyle="success" className="center" onDismiss={this.handleAlertDismiss}>
+				<Alert bsStyle="success" className="center" onDismiss={this.dismissUploadSuccess}>
 				File uploaded successfully!
 				</Alert>
 				: null
