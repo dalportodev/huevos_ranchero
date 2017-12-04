@@ -20,6 +20,14 @@ class VideoPlayback extends Component {
 			data: [],
 			rows: [],
 			fields: ['id', 'name', 'date']
+			//playbacktools
+			playing: true,
+    		volume: 0.8,
+    		muted: false,
+    		played: 0,
+    		duration: 0,
+    		playbackRate: 1.0,
+    		loop: false
 		}
 
 		this.video = this.video.bind(this);
