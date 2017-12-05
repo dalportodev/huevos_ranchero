@@ -143,30 +143,29 @@ register(){
 
 	fetch(checkUsername)
 	.then(function(response){
-		if(response.status === 400){
-			fetch(registerUser)
-			.then(function(response) {
-				if(response.status === 400){
-					that.setState(({
-						usernameExistsError: true,
-						registerError: false
-					}));
-					//alert("Username already exists.");
+		response.json()
+		.then(function(data){
+			let success = data.success;
+			if(!success){
+				fetch(registerUser)
+				.then(function(response) {
+					if(response.status === 400){
+						that.setState(({
+							usernameExistsError: true,
+							registerError: false
+						}));
 				} else if(response.status === 200){
 					alert("Registered");
 					that.login();
 				}
-				response.json()
-				.then(function(data){
-				})
 			});
-		} else if(response.status === 200){
-			that.setState(({
-				usernameExistsError: true,
-				registerError: false
-			}));
-			//alert("Username already exists.");
-		}
+			} else {
+				that.setState(({
+					usernameExistsError: true,
+					registerError: false
+				}));
+			}		
+		});
 	});
 }
 

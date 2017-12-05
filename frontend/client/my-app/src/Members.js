@@ -1,83 +1,90 @@
 import React, { Component } from 'react';
 import logo from './huevosranchero.png';
 import './css/Members.css';
-import { Alert, Form, FormControl, Button, Panel, Table, Grid, Row, Col} from 'react-bootstrap';
-import { connect } from 'react-redux';
-import VideoTable from './VideoTable';
+import { Alert, Form, FormControl, Button, Panel, Table, Grid, Row, Col,
+	Popover, Modal, OverlayTrigger} from 'react-bootstrap';
+	import { connect } from 'react-redux';
+	import VideoTable from './VideoTable';
 
-const request = require('superagent');
-var currentTime = new Date().toString().split(' ').splice(1,4).join(' ');
+	const request = require('superagent');
+	var currentTime = new Date().toString().split(' ').splice(1,4).join(' ');
 
-class Members extends Component {
-	constructor(props){
-		super(props);
+	class Members extends Component {
+		constructor(props){
+			super(props);
 
-		this.state = {
-			uploadError: false,
-			uploadSuccess: false,
-			inputValue : 'Only .mp4 files allowed.',
-			data: [
-			/*{
-				id: 100,
-				name: "test",
-				date: currentTime
-			}, {
-				id: 200,
-				name: "test2",
-				date: currentTime
-			}, {
-				id: 300,
-				name: "test3",
-				date: currentTime
-			}*/
-			],
-			rows: [],
-			fields: ['id', 'name', 'date']
+			this.state = {
+				uploadError: false,
+				uploadSuccess: false,
+				inputValue : 'Only .mp4 files allowed.',
+				data: [],
+				rows: [],
+				fields: ['id', 'name', 'date'],
+				showModal: false,
+				link: '',
+				modalTitle: ''
+			}
+
+			this.video = this.video.bind(this);
+			this.getVideos = this.getVideos.bind(this);
+			this.handleAlertDismiss = this.handleAlertDismiss.bind(this);
+			this.dismissUploadSuccess = this.dismissUploadSuccess.bind(this);
+			this.openVideo = this.openVideo.bind(this);
+			this.setModalTitle = this.setModalTitle.bind(this);
 		}
 
-		this.video = this.video.bind(this);
-		this.getVideos = this.getVideos.bind(this);
-		this.handleAlertDismiss = this.handleAlertDismiss.bind(this);
-		this.dismissUploadSuccess = this.dismissUploadSuccess.bind(this);
-	}
+		openVideo(id, name){
+			let url = "video?video=" + id;
+			this.setState({ 
+				showModal: true,
+				link: url,
+				modalTitle: 'ID#' + id + ' - ' + name });
+		}
 
-	handleAlertDismiss(){
-		this.setState({ uploadError: false });
-	}
+		closeVideo(){
+			this.setState({showModal: false});
+		}
 
-	dismissUploadSuccess(){
-		this.setState({ uploadSuccess: false });
-	}
+		setModalTitle(title){
+			this.setState({modalTitle:title});
+		}
 
-	componentWillMount(){
-		this.getVideos();
-		//this.video();
-	}
+		handleAlertDismiss(){
+			this.setState({ uploadError: false });
+		}
 
-	componentDidMount(){
-		this.fileName.value = '';
-	}
+		dismissUploadSuccess(){
+			this.setState({ uploadSuccess: false });
+		}
 
-	getVideos(){
-		var that = this;
-		var getvids = new Request('http://localhost:3001/api/get-videos?username=' + this.props.username, {
-			method: 'GET'
-		});
+		componentWillMount(){
+			this.getVideos();
+		}
 
-		fetch(getvids)
-		.then(function(response){
-			if(response.status === 200){
-				response.json()
-				.then(function(datas){
-					that.setState({ data: [] });
-					for(let i in datas){
-						that.state.data.push(
-						{
-							id : datas[i].id,
-							name: datas[i].file_name,
-							date: datas[i].date
-						});
-					}
+		componentDidMount(){
+			this.fileName.value = '';
+		}
+
+		getVideos(){
+			var that = this;
+			var getvids = new Request('http://localhost:3001/api/get-videos?username=' + this.props.username, {
+				method: 'GET'
+			});
+
+			fetch(getvids)
+			.then(function(response){
+				if(response.status === 200){
+					response.json()
+					.then(function(datas){
+						that.setState({ data: [] });
+						for(let i in datas){
+							that.state.data.push(
+							{
+								id : datas[i].id,
+								name: datas[i].file_name,
+								date: datas[i].date
+							});
+						}
 					//console.log(that.state.data);
 					that.video();
 				});
@@ -86,21 +93,23 @@ class Members extends Component {
 				//alert("Error getting user videos");
 			}
 		});
-	}
+		}
 
-	video(){
-		var that = this;
-		let fields = ['id', 'name', 'date'];
-		this.setState({ rows: [] });
-		this.state.data.forEach(function(data){
-			that.state.rows.push(
-				<VideoTable key={data.id} 
-				tbodyIdKey={data.id} 
-				rowData={data} 
-				dataOrder={fields} 
-				/>);
-		});
-		this.setState(this.state);
+		video(){
+			var that = this;
+			let fields = ['id', 'name', 'date'];
+			this.setState({ rows: [] });
+			this.state.data.forEach(function(data){
+				that.state.rows.push(
+					<VideoTable key={data.id} 
+					tbodyIdKey={data.id} 
+					rowData={data} 
+					dataOrder={fields} 
+					openVideo={that.openVideo}
+					setModalTitle={that.setModalTitle}
+					/>);
+			});
+			this.setState(this.state);
 		//console.log(this.state.rows);
 	}
 
@@ -164,6 +173,22 @@ class Members extends Component {
 	}
 
 	render(){
+		const popover = (
+			<Popover id="modal-popover" title="popover">
+			popover test
+			</Popover>
+			);
+
+		var Iframe = React.createClass({     
+			render: function() {
+				return(         
+					<div>          
+					<iframe src={this.props.src} height={this.props.height} width={this.props.width} scrolling="no" frameBorder="0" />         
+					</div>
+					)
+			}
+		});
+
 		return (
 			<div>
 			<div className="headingBlock">
@@ -226,6 +251,20 @@ class Members extends Component {
 			<br/>
 			<br/>
 			<br/>
+
+			<Modal bsSize="large" show={this.state.showModal} onHide={this.closeVideo.bind(this)}>
+			<Modal.Header closeButton>
+			<Modal.Title>{this.state.modalTitle}</Modal.Title>
+			</Modal.Header>
+			<Modal.Body>
+			<Iframe src={this.state.link} height="500" width="640" />
+			</Modal.Body>
+			<Modal.Footer>
+			<Button onClick={this.closeVideo.bind(this)}>Close</Button>
+			</Modal.Footer>
+			</Modal>
+
+
 
 			<Table bordered condensed hover>
 			<thead>

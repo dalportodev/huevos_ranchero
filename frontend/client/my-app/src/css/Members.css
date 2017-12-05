@@ -88,3 +88,10 @@
 .center{
 	text-align:center;
 }
+
+iframe{
+	overflow: hidden;
+	margin-left: auto;
+    margin-right: auto;
+    display: block;
+}

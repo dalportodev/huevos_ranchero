@@ -1,9 +1,46 @@
 .player-wrapper {
-  width: 480px;
-  height: 270px;
+	width: 480px;
+	height: 270px;
 }
 
 .react-player {
-  margin-bottom: 10px;
-  background: rgba($black, .1);
+	margin-bottom: 10px;
+	background: rgba($black, .1);
 }
+
+.play {
+	background: url('/images/playbutton.png') no-repeat;
+	border: 0px;
+	width:50px;
+	height:50px;
+	float: left;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+.pause {
+	background: url('/images/pausebutton.png') no-repeat;
+	border: 0px;
+	width:50px;
+	height:50px;
+	float: left;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+.fullscreen {
+	background: url('/images/fullscreen.png') no-repeat;
+	border: 0px;
+	margin-right:10px;
+	width:50px;
+	height:50px;
+	float: right;
+}
+
+.playback{
+	width: 75% !important;
+	float: left;
+	margin-top: 15px;
+}
+
+button:focus {outline:0;}
