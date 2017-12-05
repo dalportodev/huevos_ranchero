@@ -164,7 +164,9 @@ app.get('/api/check-username', function(request, response){
 		if(table.rows.length > 0){
 			return response.status(200).send(table.rows);
 		} else {
-			return response.status(400).send(table.rows);
+			return response.send({
+				'success': false
+			});
 		}
 	});
 });
@@ -244,7 +246,7 @@ app.post('/api/new-user', function(request, response){
 	console.log(request.body);
 
 	pool.query('INSERT INTO userdata (username, password, first_name, last_name) VALUES($1, $2, $3, $4)', [username, password, first_name, last_name], (err, table) => {
-		//console.log(table.rows[0]);
+		console.log(table.rows);
 		console.log("Data inserted");
 		return response.status(200).json({
 			message: 'User successfully registered'
