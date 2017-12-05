@@ -342,6 +342,8 @@ playing={playing}
                 <button onClick={this.playPause}>{playing ? 'Pause' : 'Play'}</button>
                 <button onClick={this.onClickFullscreen}>Fullscreen</button>
                 <th>Playback Speed</th> <br/>
+                <button onClick={this.setPlaybackRate} value={.2}>.2</button>
+                <button onClick={this.setPlaybackRate} value={.5}>.5</button>
                 <button onClick={this.setPlaybackRate} value={1}>1</button>
                 <button onClick={this.setPlaybackRate} value={1.5}>1.5</button>
                 <button onClick={this.setPlaybackRate} value={2}>2</button>
