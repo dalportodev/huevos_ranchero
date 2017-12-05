@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
 import logo from './huevosranchero.png';
 import './css/Members.css';
+import './css/VideoPlayback.css';
 import { Alert, Form, FormControl, Button, Panel, Table, Grid, Row, Col} from 'react-bootstrap';
 import { connect } from 'react-redux';
 import VideoTable from './VideoTable';
 import ReactPlayer from 'react-player'
+import { findDOMNode } from 'react-dom'
+import screenfull from 'screenfull'
 
 const request = require('superagent');
 var currentTime = new Date().toString().split(' ').splice(1,4).join(' ');
@@ -16,18 +19,19 @@ class VideoPlayback extends Component {
 		this.state = {
 			uploadError: false,
 			uploadSuccess: false,
-			inputValue : 'Only .mp4 files allowed.',
-			data: [],
-			rows: [],
-			fields: ['id', 'name', 'date']
-			//playbacktools
 			playing: true,
     		volume: 0.8,
     		muted: false,
     		played: 0,
     		duration: 0,
     		playbackRate: 1.0,
-    		loop: false
+    		loop: false,
+			inputValue : 'Only .mp4 files allowed.',
+			data: [],
+			rows: [],
+			fields: ['id', 'name', 'date']
+		
+			
 		}
 
 		this.video = this.video.bind(this);
@@ -35,6 +39,45 @@ class VideoPlayback extends Component {
 		this.handleAlertDismiss = this.handleAlertDismiss.bind(this);
 	}
 
+	  playPause = () => {
+    this.setState({ playing: !this.state.playing })
+  }
+  stop = () => {
+    this.setState({ url: null, playing: false })
+  }
+
+  onPlay = () => {
+    this.setState({ playing: true })
+  }
+  onPause = () => {
+    this.setState({ playing: false })
+  }
+    toggleLoop = () => {
+    this.setState({ loop: !this.state.loop })
+  }
+ setPlaybackRate = e => {
+    this.setState({ playbackRate: parseFloat(e.target.value) })
+  }
+    onSeekMouseDown = e => {
+    this.setState({ seeking: true })
+  }
+  onSeekChange = e => {
+    this.setState({ played: parseFloat(e.target.value) })
+  }
+  onSeekMouseUp = e => {
+    this.setState({ seeking: false })
+    this.player.seekTo(parseFloat(e.target.value))
+  }
+  onProgress = state => {
+    // We only want to update time slider if we are not currently seeking
+    if (!this.state.seeking) {
+      this.setState(state)
+    }
+  }
+
+    onClickFullscreen = () => {
+    screenfull.request(findDOMNode(this.player))
+  }
 	handleAlertDismiss(){
 		this.setState({ uploadError: false });
 	}
@@ -188,7 +231,21 @@ class VideoPlayback extends Component {
 
 	}
 
+ ref = player => {
+    this.player = player
+  }
+
 	render(){
+		const {
+      url, playing, volume, muted, loop,
+      played, loaded, duration,
+      playbackRate,
+      soundcloudConfig,
+      vimeoConfig,
+      youtubeConfig,
+      fileConfig
+    } = this.state
+      const SEPARATOR = ' · '
 		return (
 			<div>
 			<div className="headingBlock">
@@ -201,6 +258,7 @@ class VideoPlayback extends Component {
 			<Panel className="panel innerBlock" bsStyle="primary" header={
 				<div>
 				<h4>Videos</h4>
+				
 				</div>
 			}>
 
@@ -242,7 +300,10 @@ class VideoPlayback extends Component {
 			</label>
 			<input type="text" className="form-control" value={this.state.inputValue} disabled />
 			</div>
+			
 			</div>
+
+
 
 			<Button className="upload" bsStyle="primary" type="submit">Upload video</Button>
 			</Form>
@@ -252,9 +313,58 @@ class VideoPlayback extends Component {
 			<br/>
 			<br/>
 			{this.state.video_id}
-			<ReactPlayer url={this.state.videoUrl} playing />
+			<ReactPlayer ref={this.ref} className='react-player' url={this.state.videoUrl} playing 
+playing={playing}
+              loop={loop}
+              playbackRate={playbackRate}
+              volume={volume}
+              muted={muted}
+              soundcloudConfig={soundcloudConfig}
+              vimeoConfig={vimeoConfig}
+              youtubeConfig={youtubeConfig}
+              fileConfig={fileConfig}
+              onReady={() => console.log('onReady')}
+              onStart={() => console.log('onStart')}
+              onPlay={this.onPlay}
+              onPause={this.onPause}
+              onBuffer={() => console.log('onBuffer')}
+              onSeek={e => console.log('onSeek', e)}
+              onEnded={() => this.setState({ playing: loop })}
+              onError={e => console.log('onError', e)}
+              onProgress={this.onProgress}
+              onDuration={duration => this.setState({ duration })}
+			/>
 
+			<th>Controls</th> <br/>
+
+<td>
+                <button onClick={this.stop}>Stop</button>
+                <button onClick={this.playPause}>{playing ? 'Pause' : 'Play'}</button>
+                <button onClick={this.onClickFullscreen}>Fullscreen</button>
+                <th>Playback Speed</th> <br/>
+                <button onClick={this.setPlaybackRate} value={1}>1</button>
+                <button onClick={this.setPlaybackRate} value={1.5}>1.5</button>
+                <button onClick={this.setPlaybackRate} value={2}>2</button>
+              </td>
+
+<br/>
+               <td>
+                <input
+                  type='range' min={0} max={1} step='any'
+                  value={played}
+                  onMouseDown={this.onSeekMouseDown}
+                  onChange={this.onSeekChange}
+                  onMouseUp={this.onSeekMouseUp}
+                />
+              </td>
+              <br/>
+              <td>
+                <label>
+                  <input type='checkbox' checked={loop} onChange={this.toggleLoop} /> Loop
+                </label>
+              </td>
 			</Panel>
+
 			</div>
 			);
 	}

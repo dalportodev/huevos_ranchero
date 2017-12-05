@@ -1,0 +1,9 @@
+.player-wrapper {
+  width: 480px;
+  height: 270px;
+}
+
+.react-player {
+  margin-bottom: 10px;
+  background: rgba($black, .1);
+}

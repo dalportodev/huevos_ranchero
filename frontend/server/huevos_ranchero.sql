@@ -21,7 +21,7 @@ SET row_security = off;
 -- Name: huevos_ranchero; Type: DATABASE; Schema: -; Owner: postgres
 --
 
-CREATE DATABASE huevos_ranchero WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'English_United States.1252' LC_CTYPE = 'English_United States.1252';
+CREATE DATABASE huevos_ranchero WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C' LC_CTYPE = 'C'; -- was 'English_United States.1252'
 
 
 ALTER DATABASE huevos_ranchero OWNER TO postgres;
