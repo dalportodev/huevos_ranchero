@@ -190,7 +190,6 @@ componentWillMount(){
 
 		return (
 			<div>
-
 			<ReactPlayer ref={this.ref} className='react-player' url={this.state.videoUrl} playing 
 			playing={playing}
 			loop={loop}
