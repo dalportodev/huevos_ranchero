@@ -104,7 +104,7 @@ h4.modal-title{
 	color: #fff;
 }
 
-.close{
+body > div:nth-child(4) > div > div.fade.in.modal > div > div > div.modal-header > button {
 	color: #fff !important;
 	opacity: .8 !important;
 }
