@@ -95,3 +95,16 @@ iframe{
     margin-right: auto;
     display: block;
 }
+
+div.modal-header{
+	background-color: #222222;
+}
+
+h4.modal-title{
+	color: #fff;
+}
+
+.close{
+	color: #fff !important;
+	opacity: .8 !important;
+}

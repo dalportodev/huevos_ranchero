@@ -212,6 +212,7 @@ componentWillMount(){
 			onDuration={duration => this.setState({ duration })}
 			/>
 
+			<button className="fullscreen" onClick={this.onClickFullscreen}></button>
 
 			{
 				playing
@@ -228,7 +229,6 @@ componentWillMount(){
 			onMouseUp={this.onSeekMouseUp}
 			/>
 
-			<button className="fullscreen" onClick={this.onClickFullscreen}></button>
 
 			<br/>
 			<br/>
