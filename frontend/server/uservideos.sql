@@ -34,7 +34,8 @@ CREATE TABLE uservideos (
     id integer DEFAULT nextval('uservideos_id_seq'::regclass) NOT NULL,
     user_id integer NOT NULL,
     date text NOT NULL,
-    file_name text NOT NULL
+    file_name text NOT NULL,
+	status text DEFAULT 'Processing' NOT NULL
 );
 
 

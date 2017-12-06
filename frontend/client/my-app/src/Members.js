@@ -19,7 +19,6 @@ import { Alert, Form, FormControl, Button, Panel, Table, Grid, Row, Col,
 				inputValue : 'Only .mp4 files allowed.',
 				data: [],
 				rows: [],
-				fields: ['id', 'name', 'date'],
 				showModal: false,
 				link: '',
 				modalTitle: ''
@@ -82,7 +81,8 @@ import { Alert, Form, FormControl, Button, Panel, Table, Grid, Row, Col,
 							{
 								id : datas[i].id,
 								name: datas[i].file_name,
-								date: datas[i].date
+								date: datas[i].date,
+								status: datas[i].status
 							});
 						}
 					//console.log(that.state.data);
@@ -97,7 +97,7 @@ import { Alert, Form, FormControl, Button, Panel, Table, Grid, Row, Col,
 
 		video(){
 			var that = this;
-			let fields = ['id', 'name', 'date'];
+			let fields = ['id', 'name', 'date', 'status'];
 			this.setState({ rows: [] });
 			this.state.data.forEach(function(data){
 				that.state.rows.push(
@@ -272,6 +272,7 @@ import { Alert, Form, FormControl, Button, Panel, Table, Grid, Row, Col,
 			<th>ID#</th>
 			<th>Name</th>
 			<th>Date</th>
+			<th>Status</th>
 			</tr>
 			</thead>
 

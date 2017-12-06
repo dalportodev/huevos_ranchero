@@ -23,6 +23,14 @@ class VideoTable extends Component{
 				let name = data.name;
 				console.log(name);
 				cells.push(<td key={i}><a href="#" onClick={() => {this.props.openVideo(id, name); return false;}}>{data[dataOrder[i]]}</a></td>);
+			} else if(i === "3") {
+				if(data[dataOrder[i]] == "Done"){
+					cells.push(<td key={i}><font color="green">{data[dataOrder[i]]}</font></td>);
+				} else if(data[dataOrder[i]] == "Error"){
+					cells.push(<td key={i}><font color="red">{data[dataOrder[i]]}</font></td>);
+				} else {
+					cells.push(<td key={i}>{data[dataOrder[i]]}</td>);
+				}
 			} else {
 				cells.push(<td key={i}>{data[dataOrder[i]]}</td>);
 			}

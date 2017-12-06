@@ -30,7 +30,7 @@ class VideoPlayback extends Component {
 			inputValue : 'Only .mp4 files allowed.',
 			data: [],
 			rows: [],
-			fields: ['id', 'name', 'date'],
+			fields: ['id', 'name', 'date', 'status'],
 			showModal: false
 
 			

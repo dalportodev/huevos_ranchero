@@ -98,7 +98,31 @@ app.post('/api/upload', function(req, res) {
 										return res.status(500).send(err);
 									}
 									console.log('File uploaded!');
-									shell.exec("./upload/runScripts " + video_id);
+
+									shell.exec("./upload/runScripts " + video_id, function(code, stdout, stderr){
+										console.log('Exit code:', code);
+										console.log('Program output:', stdout);
+										console.log('Program stderr:', stderr);
+
+										if(code == 0){
+											pool.query("UPDATE uservideos SET status='Done' WHERE id=" + video_id + ";", (err, table4) => {
+												console.log("Successfully processed video id: " + video_id);
+											});
+										} else if(code == 1){
+											pool.query("UPDATE uservideos SET status='Error' WHERE id=" + video_id + ";", (err, table4) => {
+												console.log("Error processing video id: " + video_id);
+											});
+										}
+									});
+
+									/*
+									if (shell.exec("./upload/runScripts " + video_id).code == 0){
+										pool.query("UPDATE uservideos SET status='Done' WHERE id=" + video_id + ";", (err, table4) => {
+											console.log("Successfully processed video id: " + video_id);
+										});
+										//shell.exit(1);
+									}
+									*/
 									return res.sendStatus(200);
 								});
 							}
@@ -172,20 +196,20 @@ app.get('/api/check-username', function(request, response){
 });
 app.get('/api/get-video', function(req, res){
 	function startsWith(str, prefix) {
-	    return str.lastIndexOf(prefix, 0) === 0;
+		return str.lastIndexOf(prefix, 0) === 0;
 	}
 
 	function endsWith(str, suffix) {
-	    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+		return str.indexOf(suffix, str.length - suffix.length) !== -1;
 	}
 	var video_id = req.query.video_id;
 	var path_to_video = __dirname + '/upload/videos/' + video_id + "/" + video_id + ".mp4"
 	console.log(path_to_video);
 
 	// Get the filename
-    var movieFileName = video_id + ".mp4";
+	var movieFileName = video_id + ".mp4";
 
-    var streamPath = path.resolve(path_to_video);
+	var streamPath = path.resolve(path_to_video);
     //Calculate the size of the file
     var stat = fs.statSync(streamPath);
     var total = stat.size;
@@ -194,47 +218,47 @@ app.get('/api/get-video', function(req, res){
 
     // Chunks based streaming
     if (req.headers.range) {
-        var range = req.headers.range;
-        var parts = range.replace(/bytes=/, "").split("-");
-        var partialstart = parts[0];
-        var partialend = parts[1];
+    	var range = req.headers.range;
+    	var parts = range.replace(/bytes=/, "").split("-");
+    	var partialstart = parts[0];
+    	var partialend = parts[1];
 
-        var start = parseInt(partialstart, 10);
-        var end = partialend ? parseInt(partialend, 10) : total - 1;
-        var chunksize = (end - start) + 1;
-        console.log('RANGE: ' + start + ' - ' + end + ' = ' + chunksize);
+    	var start = parseInt(partialstart, 10);
+    	var end = partialend ? parseInt(partialend, 10) : total - 1;
+    	var chunksize = (end - start) + 1;
+    	console.log('RANGE: ' + start + ' - ' + end + ' = ' + chunksize);
 
-        file = fs.createReadStream(streamPath, {
-            start: start,
-            end: end
-        });
-        res.writeHead(206, {
-            'Content-Range': 'bytes ' + start + '-' + end + '/' + total,
-            'Accept-Ranges': 'bytes',
-            'Content-Length': chunksize,
-            'Content-Type': contentType
-        });
-        res.openedFile = file;
-        file.pipe(res);
+    	file = fs.createReadStream(streamPath, {
+    		start: start,
+    		end: end
+    	});
+    	res.writeHead(206, {
+    		'Content-Range': 'bytes ' + start + '-' + end + '/' + total,
+    		'Accept-Ranges': 'bytes',
+    		'Content-Length': chunksize,
+    		'Content-Type': contentType
+    	});
+    	res.openedFile = file;
+    	file.pipe(res);
     } else {
-        console.log('ALL: ' + total);
-        file = fs.createReadStream(streamPath);
-        res.writeHead(200, {
-            'Content-Length': total,
-            'Content-Type': contentType
-        });
-        res.openedFile = file;
-        file.pipe(res);
+    	console.log('ALL: ' + total);
+    	file = fs.createReadStream(streamPath);
+    	res.writeHead(200, {
+    		'Content-Length': total,
+    		'Content-Type': contentType
+    	});
+    	res.openedFile = file;
+    	file.pipe(res);
     }
 
     res.on('close', function() {
-        console.log('response closed');
-        if (res.openedFile) {
-            res.openedFile.unpipe(this);
-            if (this.openedFile.fd) {
-                fs.close(this.openedFile.fd);
-            }
-        }
+    	console.log('response closed');
+    	if (res.openedFile) {
+    		res.openedFile.unpipe(this);
+    		if (this.openedFile.fd) {
+    			fs.close(this.openedFile.fd);
+    		}
+    	}
     });
 });
 
