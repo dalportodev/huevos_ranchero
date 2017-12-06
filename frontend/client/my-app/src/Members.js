@@ -21,7 +21,9 @@ import { Alert, Form, FormControl, Button, Panel, Table, Grid, Row, Col,
 				rows: [],
 				showModal: false,
 				link: '',
-				modalTitle: ''
+				modalTitle: '',
+				lastLoginDate: '',
+				lastIP: ''
 			}
 
 			this.video = this.video.bind(this);
@@ -58,6 +60,30 @@ import { Alert, Form, FormControl, Button, Panel, Table, Grid, Row, Col,
 
 		componentWillMount(){
 			this.getVideos();
+			var that = this;
+
+			var getInfo = new Request('http://localhost:3001/api/get-userinfo?username=' + this.props.username, {
+				method: 'GET'
+			});
+
+			fetch(getInfo)
+			.then(function(response){
+				if(response.status === 200){
+					response.json()
+					.then(function(data){
+						//alert(data[0].last_login);
+						that.setState(({
+							lastLoginDate: data[0].last_login,
+							lastIP: data[0].last_ip
+						}));	
+					});
+				} else if(response.status === 400) {
+					that.setState(({
+						lastLoginDate: 'Error',
+						lastIP: 'Error'
+					}));
+				}
+			});
 		}
 
 		componentDidMount(){
@@ -197,6 +223,9 @@ import { Alert, Form, FormControl, Button, Panel, Table, Grid, Row, Col,
 			</div>
 			<img src={logo} className="logo" alt="huevos_ranchero"/>
 			<h3 className="center">Welcome {this.props.username}!</h3>
+			<h5 className="center">Last IP: {this.state.lastIP}</h5>
+			<h5 className="center">Last login: {this.state.lastLoginDate}</h5>
+			
 			</div>
 			<Panel className="panel innerBlock" bsStyle="primary" header={
 				<div>

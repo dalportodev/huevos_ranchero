@@ -194,6 +194,19 @@ app.get('/api/check-username', function(request, response){
 		}
 	});
 });
+
+app.get('/api/get-userinfo', function(request, response){
+	var username = request.query.username;
+	pool.query("SELECT last_login, last_ip FROM userdata WHERE username='" + username + "'", (err, table) => {
+		if(table.rows.length > 0){
+			console.log(table.rows[0].last_login);
+			return response.status(200).send(table.rows);
+		} else {
+			return response.status(400).send(table.rows);
+		}
+	});
+});
+
 app.get('/api/get-video', function(req, res){
 	function startsWith(str, prefix) {
 		return str.lastIndexOf(prefix, 0) === 0;
