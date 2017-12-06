@@ -32,6 +32,14 @@ function restrict(request, response, next){
 	}
 }
 
+function startsWith(str, prefix) {
+	return str.lastIndexOf(prefix, 0) === 0;
+}
+
+function endsWith(str, suffix) {
+	return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true}));
 
@@ -186,10 +194,12 @@ app.get('/api/check-username', function(request, response){
 
 	pool.query("SELECT username FROM userdata WHERE username='" + username + "'", (err, table) => {
 		if(table.rows.length > 0){
-			return response.status(200).send(table.rows);
+			return response.status(200).json({
+				success: true
+			});
 		} else {
-			return response.send({
-				'success': false
+			return response.status(200).json({
+				success: false
 			});
 		}
 	});
@@ -208,13 +218,6 @@ app.get('/api/get-userinfo', function(request, response){
 });
 
 app.get('/api/get-video', function(req, res){
-	function startsWith(str, prefix) {
-		return str.lastIndexOf(prefix, 0) === 0;
-	}
-
-	function endsWith(str, suffix) {
-		return str.indexOf(suffix, str.length - suffix.length) !== -1;
-	}
 	var video_id = req.query.video_id;
 	var path_to_video = __dirname + '/upload/videos/' + video_id + "/" + video_id + ".mp4"
 	console.log(path_to_video);
@@ -283,7 +286,9 @@ app.post('/api/new-user', function(request, response){
 	console.log(request.body);
 
 	pool.query('INSERT INTO userdata (username, password, first_name, last_name) VALUES($1, $2, $3, $4)', [username, password, first_name, last_name], (err, table) => {
-		console.log(table.rows);
+		if(err){
+			return response.status(400).send(err);
+		}
 		console.log("Data inserted");
 		return response.status(200).json({
 			message: 'User successfully registered'
