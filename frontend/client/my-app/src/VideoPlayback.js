@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+﻿import React, { Component } from 'react';
 import logo from './huevosranchero.png';
 import './css/Members.css';
 import './css/VideoPlayback.css';
@@ -235,6 +235,8 @@ componentWillMount(){
 			<br/>
 			<b>Playback Speed</b>
 			<br/>
+			<button onClick={this.setPlaybackRate} value={.2}>.2</button>
+			<button onClick={this.setPlaybackRate} value={.5}>.5</button>
 			<button onClick={this.setPlaybackRate} value={1}>1</button>
 			<button onClick={this.setPlaybackRate} value={1.5}>1.5</button>
 			<button onClick={this.setPlaybackRate} value={2}>2</button>
